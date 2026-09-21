@@ -1,4 +1,4 @@
-access	cases.0.case_id	cases.0.submitter_id	data_category	data_format	experimental_strategy	file_id	file_name	id
+access	            cases.0.case_id	            cases.0.submitter_id	data_category	data_format	experimental_strategy	file_id	                                    file_name	                                             id
 open	a4f68239-5b9f-40d7-9e52-b68efa170c1c	TCGA-3B-A9I1	Transcriptome Profiling	TSV	RNA-Seq	188f70e9-09d2-4c61-9279-e233027eb7b9	62a39969-0f5d-48f2-9ecd-b6c199f0723e.rna_seq.augmented_star_gene_counts.tsv	188f70e9-09d2-4c61-9279-e233027eb7b9
 open	90db503c-f9c8-4d31-bed4-e3383b69c89b	TCGA-X9-A973	Transcriptome Profiling	TSV	RNA-Seq	e38618a9-0d3a-4668-a290-46af4960a329	4d95d113-14eb-45f3-9a97-3c6c301fe2a2.rna_seq.augmented_star_gene_counts.tsv	e38618a9-0d3a-4668-a290-46af4960a329
 controlled	89a3ccb1-252a-46f9-97c7-3e44b34d7967	TCGA-X6-A7WB	Transcriptome Profiling	TSV	RNA-Seq	20e5e5db-8004-44f3-823e-897a2643bd46	d0e06eac-e98c-4b6c-af28-900882579f2a.rna_seq.star_splice_junctions.tsv.gz	20e5e5db-8004-44f3-823e-897a2643bd46

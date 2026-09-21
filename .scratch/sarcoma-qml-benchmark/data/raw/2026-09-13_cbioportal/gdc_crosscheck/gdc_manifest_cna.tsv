@@ -1,4 +1,4 @@
-access	cases.0.case_id	cases.0.submitter_id	data_category	data_format	experimental_strategy	file_id	file_name	id
+access	            cases.0.case_id	            cases.0.submitter_id	data_category	data_format	experimental_strategy	file_id	                                               file_name	                                                            id
 open	90db503c-f9c8-4d31-bed4-e3383b69c89b	TCGA-X9-A973	Copy Number Variation	TSV	Genotyping Array	f2e4354e-aee4-4c06-acaa-b5b6eb084cbf	TCGA-SARC.8bad38ee-5f75-4c5f-97dd-b49a46fb3f98.gene_level_copy_number.v36.tsv	f2e4354e-aee4-4c06-acaa-b5b6eb084cbf
 controlled	a37238f3-55b5-43df-a0c5-3d22ee5156f3	TCGA-DX-A48R	Copy Number Variation	CEL	Genotyping Array	484bb82e-96ea-478c-97b1-9284286658f7	SNOWS_p_TCGA_Batch_309_310_NSP_GenomeWideSNP_6_F02_1362042.CEL	484bb82e-96ea-478c-97b1-9284286658f7
 controlled	89a3ccb1-252a-46f9-97c7-3e44b34d7967	TCGA-X6-A7WB	Copy Number Variation	CEL	Genotyping Array	bcf80f35-5c4d-4443-9b0e-5f7f976e445d	TAZZA_p_TCGAb3_62_63_64_65_NSP_GenomeWideSNP_6_C12_1387836.CEL	bcf80f35-5c4d-4443-9b0e-5f7f976e445d

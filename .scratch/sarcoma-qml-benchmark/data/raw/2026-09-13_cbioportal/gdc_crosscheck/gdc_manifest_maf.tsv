@@ -1,4 +1,4 @@
-access	cases.0.case_id	cases.0.submitter_id	data_category	data_format	experimental_strategy	file_id	file_name	id
+access	            cases.0.case_id	            cases.0.submitter_id	data_category	data_format	experimental_strategy	file_id	                                    file_name	                                             id
 controlled	a4f68239-5b9f-40d7-9e52-b68efa170c1c	TCGA-3B-A9I1	Simple Nucleotide Variation	MAF	WXS	b0987ea4-7478-43e9-83d7-e2da7a2da706	1eccc629-72be-45f1-b595-ff0f617b538f.wxs.VarScan2.aliquot.maf.gz	b0987ea4-7478-43e9-83d7-e2da7a2da706
 controlled	89a3ccb1-252a-46f9-97c7-3e44b34d7967	TCGA-X6-A7WB	Simple Nucleotide Variation	MAF	WXS	54c5a386-7f57-447e-821e-c87a73d91e11	d037055c-3660-473c-b867-bcbe983e5da5.wxs.MuTect2.aliquot.maf.gz	54c5a386-7f57-447e-821e-c87a73d91e11
 controlled	89a3ccb1-252a-46f9-97c7-3e44b34d7967	TCGA-X6-A7WB	Simple Nucleotide Variation	MAF	WXS	59eb56c6-448d-48a4-993c-ff187c5e4d44	a7f66a63-7cb0-432e-9716-90155301bcbc.wxs.aliquot_ensemble_raw.maf.gz	59eb56c6-448d-48a4-993c-ff187c5e4d44
