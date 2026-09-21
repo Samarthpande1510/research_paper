@@ -147,9 +147,11 @@ the spec's 105 LMS / 58 DDLPS / 261-total breakdown:
    10.1016/j.cell.2017.10.014, PMC5693358) — the original TCGA sarcoma
    genomics paper with expert-pathology-reviewed subtypes. States **206**
    total sarcomas: 80 LMS (53 soft-tissue + **27 uterine**), 50 DDLPS, 44 UPS,
-   17 MFS, 10 SS, 5 MPNST. Different cohort — includes uterine LMS (out of
-   scope for TCGA-SARC, which is soft-tissue only), and a smaller N than the
-   PanCanAtlas's 261. Not the source.
+   17 MFS, 10 SS, 5 MPNST. Smaller N than the PanCanAtlas's 261, so not the
+   source of the spec's counts. (CORRECTION 2026-09-22: this line originally
+   called the uterine LMS "out of scope for TCGA-SARC, which is soft-tissue
+   only". That was wrong — uterine LMS ARE in TCGA-SARC. See the
+   uterine-site confound addendum at the end of this file.)
 2. **GDC clinical fields directly** (`diagnoses.primary_diagnosis`,
    `disease_type`) queried for all 261 TCGA-SARC cases. Closest hits:
    `disease_type = "Nerve Sheath Tumors"` = 9 (exact match to spec's MPNST),
@@ -230,3 +232,30 @@ Step 6 (merge into one working table, LMS-vs-DDLPS scope only) is now
 blocked on resolving the cohort-definition gap above, not just on picking
 `ICD_O_3_HISTOLOGY` over `SUBTYPE` as previously noted. Step 7 (verify
 missingness on the real merged table) follows once that's settled.
+
+## Addendum — 2026-09-22: should data_clinical_patient.txt columns be features? (uterine-site confound)
+
+Checked each clinical column against the label on the ICD_O_3_HISTOLOGY cohort
+(97 LMS + 58 DDLPS = 155; in-sample majority-vote accuracy, so optimistic;
+always-guess-LMS baseline = 0.626):
+
+- `ICD_O_3_SITE` 0.697 (20 distinct values), `ICD_10` 0.703, `SEX` 0.671,
+  `PRIOR_DX` 0.652. Everything else ~0.626 (no signal).
+- AJCC stage / PATH_T/N/M / lymph-node / WEIGHT columns are **100% blank** in
+  this cohort — unusable.
+- AGE: LMS mean 58.9 (sd 11.4) vs DDLPS 63.6 (sd 12.9) — heavy overlap.
+
+**Key finding — uterine confound.** By `ICD_O_3_SITE`, 25 LMS carry `C55.9`
+(uterus NOS) and 3 more carry `C54.2`/`C54.9` (myometrium/corpus) — about 28 of
+the 97 LMS are uterine, versus 0 of the 58 DDLPS. Site `C48.0` (retroperitoneum)
+is 47 DDLPS vs 40 LMS. Sex tracks this: 65 of 97 LMS are female vs 19 of 58
+DDLPS. So "where the tumor is" (and sex) partly separates the classes on its
+own, and omics features could also pick up uterine-vs-non-uterine tissue-of-
+origin signal instead of LMS-vs-DDLPS tumor biology. The spec's "no confound"
+claim for this pair (§3) does not account for this.
+
+Decision pending with user: (a) keep omics-only features (no clinical columns
+as model inputs); (b) add a clinical-only baseline (site+sex+age) as a
+shortcut floor; (c) run a sensitivity analysis excluding uterine-site LMS.
+Site-code-based uterine counts should be confirmed against sample-level
+`TUMOR_TISSUE_SITE` before relying on the exact number 28.
