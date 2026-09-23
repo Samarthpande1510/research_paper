@@ -1,0 +1,46 @@
+{
+  "cohort": {
+    "n_total": 155,
+    "n_lms": 97,
+    "n_ddlps": 58,
+    "label_encoding": "DDLPS=1 (minority/positive), LMS=0 (majority)",
+    "n_uterine_site_lms": 28
+  },
+  "rna_seq": {
+    "dropped_null_symbol_rows": 13,
+    "duplicate_symbol_rows_disambiguated": 14,
+    "duplicate_symbol_and_entrez_rows_disambiguated_by_occurrence": 12,
+    "n_genes_final": 20518,
+    "patients_missing_this_modality": [
+      "TCGA-DX-A48V-01",
+      "TCGA-DX-A6BK-01"
+    ],
+    "within_sample_missing_values_left_nan": 0
+  },
+  "cna": {
+    "dropped_null_symbol_rows": 0,
+    "duplicate_symbol_rows_disambiguated": 79,
+    "duplicate_symbol_and_entrez_rows_disambiguated_by_occurrence": 75,
+    "n_genes_final": 25128,
+    "patients_missing_this_modality": [
+      "TCGA-WK-A8XZ-01"
+    ],
+    "within_sample_missing_values_filled_zero": 0
+  },
+  "mutation": {
+    "mutation_records_total": 17393,
+    "mutation_records_dropped_non_nonsynonymous": 0,
+    "n_genes_final": 5165,
+    "patients_with_zero_mutation_records": 20,
+    "note": "All zero-mutation-record patients verified 2026-09-23 against cBioPortal's sarc_tcga_pan_can_atlas_2018_sequenced sample list -- confirmed sequenced, so these are real biological zeros, not missing data."
+  },
+  "missing_modality_patients": {
+    "missing_rnaseq": [
+      "TCGA-DX-A48V",
+      "TCGA-DX-A6BK"
+    ],
+    "missing_cna": [
+      "TCGA-WK-A8XZ"
+    ]
+  }
+}
