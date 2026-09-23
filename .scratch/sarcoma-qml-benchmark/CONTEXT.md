@@ -30,7 +30,7 @@ training) have **not** started — no model has been run yet.
 | 4. GTEx layer | Correctly skipped — out of scope for this phase |
 | 5. Archive raw downloads | Done, but **3 files currently fail checksum** — see §5, open item 2 |
 | 6. Merge into one working table | **Done 2026-09-23.** N=155 (97 LMS + 58 DDLPS), `DDLPS=1`/`LMS=0`. Output: `data/processed/{clinical_labels,rna_seq_log2,cna_gistic2,mutation_binary}.parquet`, one shared patient index (not one flat file — see logbook entry). Script: `src/step6_merge.py`. |
-| 7. Verify missingness on real merged table | Partially done as a byproduct of step 6 (3 whole-modality gaps + 20 confirmed-zero mutation patients logged in `step6_merge_manifest.json`); a full step-7 pass over the merged table itself hasn't been run yet |
+| 7. Verify missingness on real merged table | **Done 2026-09-23.** Only gaps are the 3 known whole-modality patients (2 RNA, 1 CNA), nothing unexplained. 376 RNA genes are constant across the cohort (MAD filter will drop them). Script: `src/step7_missingness_audit.py`, report: `data/processed/step7_missingness_report.json`. |
 | 8–16 | Not started |
 
 ## 3. Folder layout (as of 2026-09-23)
@@ -41,18 +41,30 @@ sarcoma-qml-benchmark/
                               dated inline notes when something is resolved — never
                               silently rewritten.
   CONTEXT.md                 This file. Onboarding only — not authoritative.
-  logbook/
-    2026-09-13_data_acquisition.md   The real history: every check run, every number
-                                      found, every mistake made and corrected, dated.
-                                      ~320 lines as of this writing. Read it, don't just
-                                      skim §4 below — the reasoning is there.
+  logbook/                   The real history: every check run, every number found,
+                              every mistake made and corrected, dated. Split one file
+                              per day as of 2026-09-23 (was one growing file before
+                              that, see the archive note below). Read these in full,
+                              don't just skim §4 below — the reasoning is there.
+    2026-09-13_data_acquisition.md                    Steps 1-5, cohort-definition
+                                                        groundwork.
+    2026-09-22_restructure_and_uterine_confound.md    Uterine-site confound finding,
+                                                        project folder restructure.
+    2026-09-23_marker_check_and_step6_merge.md        Marker-gene check, the Step 6
+                                                        merge (cohort locked at N=155).
+    _archive_2026-09-13_full_log_pre_split.md         Full original log before the
+                                                        2026-09-23 split, formal
+                                                        wording preserved verbatim.
+                                                        Not for day-to-day reading.
   data/
     raw/2026-09-13_cbioportal/       Downloaded files, meant to be read-only. Has
                                       CHECKSUMS.sha256. See §5 open item 2 — 3 files in
                                       here currently fail their checksum.
-    processed/                       Empty. Nothing generated yet.
+    processed/                       clinical_labels, rna_seq_log2, cna_gistic2,
+                                      mutation_binary (.parquet). Built by
+                                      src/step6_merge.py, done 2026-09-23.
   configs/                   Empty. One settings file per experiment run goes here later.
-  src/                       Empty. No code written yet.
+  src/                       step6_merge.py (the Step 6 merge). Otherwise empty.
   results/
     exp1_full_cohort/        Empty
     exp2_ablation/           Empty
@@ -179,8 +191,9 @@ live search results, not recalled from training data.
 ## 9. Suggested next step
 
 Open decision #1 in §5 (N=158 vs N=163) is resolved — N=155, step 6 is done (see §2).
-Next: run a full step-7 missingness pass over the merged parquet tables in
-`data/processed/` (the per-modality gaps are already logged, but the general "count
-what's actually missing, don't assume" check from spec.md step 7 hasn't been run against
-the merged table as its own artifact yet). Open decision #2 in §5 (checksum mismatch on
-3 GDC manifest files) is still unresolved and independent of this.
+Step 7 (missingness audit) is done too, see §2. Next is steps 9-13 of the spec: the
+per-fold pipeline (MAD filter, ElasticNet selection down to 8-16 genes, per-fold scaling,
+fixed seeds, logging). One open design question to settle first: which modalities feed the
+funnel (spec says "genes", so probably RNA-seq only) and how to treat the 2 patients with
+no RNA and the 1 with no CNA when a model needs that modality. Open decision #2 in §5
+(checksum mismatch on 3 GDC manifest files) is still unresolved and independent of this.
