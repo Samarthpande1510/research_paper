@@ -394,3 +394,272 @@ NOT DONE: A full step-7 "count what's actually missing on the real merged
           (per-fold feature selection).
 OPEN:     Open decision #2 from CONTEXT.md §5 (3 GDC manifest checksum
           mismatches) is untouched — independent of step 6, still pending.
+
+---
+
+## Style pass, 2026-09-23: same entries, rewritten in plain language
+
+Nothing above this line was touched. The content of every entry got a bit
+formal and dash-heavy over time (partly my own doing), so here's the same
+information, entry by entry, in a more normal writing voice. No facts,
+numbers, or decisions changed, just how it's written.
+
+**Step 1: Confirm access.** Checked whether we could actually reach the
+data: cBioPortal's REST API, the GitHub datahub, and the GDC API all worked
+with no login needed. We don't need dbGaP controlled-access approval either,
+since nothing in this plan touches raw BAM files or germline VCFs.
+
+**Step 2: Download from cBioPortal.** Pulled five files from the
+`sarc_tcga_pan_can_atlas_2018` study: the two clinical files, the CNA file,
+the RSEM expression file, and a mutations file. Sizes and checksums are in
+the table above and in `CHECKSUMS.sha256`.
+
+One thing worth calling out: `data_mutations.txt` wasn't actually available
+through the datahub mirror. Its git-lfs pointer resolves to an object ID that
+GitHub's LFS API just returns a 404 for, and I checked twice a few seconds
+apart to rule out a fluke. Everything else downloaded fine, including the
+much bigger RSEM file, so this looks like a gap with that one file
+specifically, not a broader access problem. I worked around it by pulling
+the same mutation calls straight from the cBioPortal REST API instead
+(17,393 records across 234 samples), saved as `data_mutations_api.json`.
+It's the same information, just row-by-row JSON instead of a MAF file, so
+whoever writes the step 6 merge needs to pivot this into a patient-by-gene
+binary matrix rather than parsing a MAF directly.
+
+Also noticed 234 distinct samples in that file vs. 255 total samples in the
+study. That's not necessarily a problem: a sample with zero mutations in
+this profile just wouldn't produce any rows in the API response. Worth
+confirming later rather than assuming either way.
+
+**Step 3: Cross-check against GDC.** Compared case counts between GDC and
+cBioPortal for the TCGA-SARC project (table above). GDC's total of 261 cases
+matches what the spec expects. The small per-modality gaps (259-261 in GDC
+vs. 253 in cBioPortal) are expected: cBioPortal's PanCancer Atlas import
+drops a handful of cases per platform for QC reasons, and that's a known,
+documented difference between the two portals, not a mistake on either side.
+
+Bigger thing worth flagging: the `SUBTYPE` column in the clinical file only
+labels 83 patients as LMS and 46 as DDLPS, well short of the spec's
+105/58. The `ICD_O_3_HISTOLOGY` column tells a different story: code
+`8858/3` gives exactly 58 DDLPS patients, matching the spec exactly, but
+code `8890/3` only gives 97 LMS, not 105. So LMS probably needs another
+histology code or two folded in to hit 105. Bottom line: don't use `SUBTYPE`
+for the cohort definition. Use `ICD_O_3_HISTOLOGY`, and figure out the exact
+code set that adds up to 105 before locking the cohort in.
+
+**Step 4: GTEx layer.** Skipped, on purpose. This phase is LMS vs. DDLPS
+only, and GTEx is explicitly out of scope until a later phase. Nothing
+downloaded for it.
+
+**Step 5: Archive.** Everything above is sitting in
+`data/raw/2026-09-13_cbioportal/`, stored exactly as it was received (the
+JSON substitute is clearly noted as a substitute, not disguised as a MAF),
+with SHA-256 checksums recorded. This folder is the reference point if
+anything downstream looks off later.
+
+**Addendum, later the same day: does the cohort actually have complete
+data?** Someone asked whether the whole-study figure ("251 of 255 samples
+have complete mutation, CNA, and expression data, 255 of 255 have
+methylation") still holds once you restrict to just the 163 LMS/DDLPS
+patients, or whether that's an assumption riding on the whole-study number.
+Checked it directly against the files already on disk.
+
+The whole-study numbers checked out first (251 and 255, matching the
+official cBioPortal sample lists). But restricting to the LMS/DDLPS cohort
+ran straight into the same problem from Step 3: there's no single column
+that gives exactly 105/58. So I ran the completeness check under both
+candidate definitions (table above). Both land around 98.1% complete, which
+is basically the same as the whole-study rate, so the "most of these 163
+patients are probably fine" assumption holds up once you actually check it.
+The same three samples are missing one modality under either definition:
+`TCGA-DX-A48V-01` and `TCGA-DX-A6BK-01` are missing RNA-seq, and
+`TCGA-WK-A8XZ-01` is missing CNA. Neither definition gets to 163, so that
+part's still open.
+
+**Correction: download status.** Somewhere earlier in this project I said
+"nothing has been downloaded into a working file yet." That wasn't true:
+the five files listed above were already on disk with verified checksums
+before that message went out, and the completeness check above ran against
+those files, not fresh API calls. Re-ran the checksum verification to be
+sure. Everything still matches.
+
+**Addendum, later still: where did 105/58 actually come from?** Went
+looking for whatever source the spec's 105 LMS / 58 DDLPS numbers trace
+back to. Checked three places, none of which reproduced it: the original
+2017 Cell paper on TCGA-SARC (206 total sarcomas, 80 LMS including 27
+uterine, 50 DDLPS, different N entirely), GDC's clinical fields directly
+(closest hit was MPNST at exactly 9, nothing for LMS or DDLPS), and a
+couple of published ML papers using this cohort (close but not exact
+numbers). So the spec's figures didn't come from any of the obvious places.
+(Correction added 2026-09-22: this section originally said uterine LMS
+cases were "out of scope for TCGA-SARC." That was wrong, they are in
+scope. See the uterine-confound note further down.)
+
+My working guess at the time: adopt `ICD_O_3_HISTOLOGY` as the cohort
+definition (58 DDLPS matches exactly, 97 LMS is the closest match to 105)
+and treat the cohort as N=155, documenting the drop from 163 as something
+we verified rather than something we assumed. Didn't decide this on my own
+since it changes every downstream sample-size number, including the
+Experiment 2 ablation points that assume up to 130 training patients. Left
+it for the user to weigh in on.
+
+**Addendum, still later: found it.** Traced the 105/58 numbers to a 2016
+GDAC Firehose clinical freeze, not a paper. That file's `histological_type`
+column gives 105 LMS, 59 dedifferentiated liposarcoma, and matches four of
+six subtypes in the spec exactly. So this is the real source.
+
+Why DDLPS is 59 there but 58 in the spec and in today's cBioPortal data:
+one patient (`TCGA-MO-A47P`) was classified as DDLPS in the 2016 freeze but
+has since been reclassified to a different liposarcoma subtype in today's
+data. The spec's 58 already reflects that correction, so nothing needs
+fixing there.
+
+Why LMS is 100 in today's cBioPortal bundle but 105 in the 2016 freeze: five
+of those 105 patients simply aren't in `sarc_tcga_pan_can_atlas_2018`'s
+clinical file at all. Checked GDC directly and all five still exist there
+with full CNA, RNA-seq, and mutation data, they just didn't make it into
+cBioPortal's specific import (probably an inclusion filter cBioPortal
+applied at import time, not a real data problem with those five cases).
+
+So the bottom line: the spec's N=163 is real, grounded in actual public
+data, every one of the 163 patients exists with full coverage in GDC. The
+only question is where to get five of the LMS patients' data from. Option A
+is to stick with N=158 using only what's already downloaded, no extra work.
+Option B is to pull those five patients' raw files from GDC and reprocess
+them to match cBioPortal's conventions, which gets you to the full 163 but
+is real extra engineering (matching TCGA's RSEM and GISTIC2 pipelines isn't
+trivial). Didn't decide this myself, flagged it for the user.
+
+**Next steps, as of that point.** Step 6 (the merge) was blocked on
+resolving the cohort-definition question above, not just on choosing
+`ICD_O_3_HISTOLOGY` over `SUBTYPE`. Step 7 would follow once that was
+settled.
+
+**Addendum, 2026-09-22: should clinical columns be used as features? (the
+uterine-site confound).** Checked every clinical column against the label,
+using the ICD_O_3_HISTOLOGY-based cohort (97 LMS, 58 DDLPS). This is just an
+in-sample majority-vote check, so treat the numbers as optimistic, not a
+real cross-validated result. A few columns showed some signal
+(`ICD_O_3_SITE` at 0.697, `ICD_10` at 0.703, `SEX` at 0.671, `PRIOR_DX` at
+0.652), everything else was around the always-guess-LMS baseline of 0.626,
+meaning no real signal. The staging columns (AJCC stage, T/N/M, lymph node,
+weight) are 100% blank in this cohort and unusable. Age overlaps heavily
+between the two groups.
+
+The real finding here: about 28 of the 97 LMS patients are from a uterine
+site (25 coded `C55.9`, 3 more coded `C54.2` or `C54.9`), compared to zero
+of the 58 DDLPS patients. Sex tracks this too, 65 of 97 LMS patients are
+female vs. 19 of 58 DDLPS. So tumor location and sex partly separate the two
+classes on their own, which means an omics model could end up picking up
+"uterine vs. non-uterine tissue" signal instead of real LMS-vs-DDLPS tumor
+biology. The spec's claim that this pair has no confound doesn't account
+for this. Left three options open for the user to decide between: omics-only
+features, adding a clinical-only baseline, or running a sensitivity check
+that excludes the uterine LMS cases.
+
+**Entry, 2026-09-22: project restructure and archive integrity check.**
+Set up the proper folder layout from the research guide (logbook, configs,
+src, results per experiment, figures, paper, processed data) and moved this
+log from a NOTES.md file sitting inside the raw data folder into its proper
+place in `logbook/`, since the raw folder should only hold data as received.
+While doing that, re-ran the checksum verification and found three files
+failing: the GDC manifest files for CNA, MAF, and RNA-seq. Traced it with
+git: someone changed just the header line of each file (padding column
+names with spaces) in a commit from 2026-09-21, the data rows themselves are
+untouched. I didn't make that edit. Left the three files as they are rather
+than restoring or re-checksumming without checking with the owner first,
+since both fixes are easy and the original bytes are recoverable either way.
+The impact is cosmetic since these files were only used for patient-count
+cross-checks, not for modeling, but the archive is supposed to hold data
+exactly as received, so this should get resolved one way or the other.
+
+**Entry, 2026-09-23: checking the marker-gene separation against the
+uterine confound.** A PhD-advisor friend reviewed the project and said this
+LMS-vs-DDLPS task is probably near-linearly separable using a handful of
+known marker genes, which would make a quantum kernel unnecessary. Checked
+that claim against the real RSEM data, then checked whether it holds up
+once you drop the 28 uterine-site LMS patients flagged above.
+
+Computed the log2 expression gap and an honest 5-fold cross-validated
+accuracy (with the threshold refit only on the training fold each time,
+averaged over 10 reshuffles) for five genes: MYH11, MDM2, CDK4, DES, and
+ACTA2. On the full 155-patient cohort, accuracy ranged from 0.752 (DES) to
+0.936 (MDM2). After removing the 28 uterine LMS patients, the numbers barely
+moved, within about 3 points either way, and a couple of the smooth-muscle
+genes actually got slightly stronger, which is the opposite of what you'd
+expect if the uterine confound were driving the separation. So the
+conclusion is that this separation is real LMS-vs-DDLPS tumor biology
+(smooth-muscle lineage vs. the 12q13-15 amplicon), not an artifact of tumor
+location. The friend's claim holds up. Still worth noting the uterine
+confound is real for other things, like sex ratio or any feature that isn't
+one of these specific marker genes, this check only clears those five genes,
+not every possible feature.
+
+**Entry, 2026-09-23: the Step 6 merge.** Before writing any merge code, ran
+a grilling session to make sure the cohort-definition question from earlier
+was actually settled and not just assumed. Went back to the raw clinical
+file and queried `ICD_O_3_HISTOLOGY` directly rather than trusting any
+earlier note, mine or otherwise.
+
+Got 97 LMS and 58 DDLPS, 155 total, not the "158 (100+58)" figure that had
+been floating around in the project notes. Traced why: the 100 actually
+comes from a different column (`CANCER_TYPE_DETAILED`), which on its own
+gives 59 DDLPS, not 58. So "158" was never what you'd get from querying one
+column, it was 100 from one column stitched to 58 from another. Also
+checked a few other things while I was in there: all 155 cohort patients
+map to exactly one sample ID each, so no risk of a messy one-to-many join.
+Two patients are missing from the RNA-seq file entirely and one from the
+CNA file, which matches what was already flagged back in the September 13
+addendum. The RSEM file has 13 rows with no gene symbol at all and 7 genes
+that show up twice, six of which share the same Entrez ID too but have
+genuinely different expression values per row, so it's a real duplicate-row
+quirk in the source file, not a data error to just collapse away. CNA has a
+similar pattern with more rows affected. And I checked cBioPortal's own
+"sequenced samples" list against the 20 cohort patients who have zero
+mutation records: all 20 are officially on that sequenced list, which
+confirms these are real biological zeros, not samples that were simply
+never sequenced.
+
+Everything below was confirmed with the user during the grilling session,
+not decided on my own. The cohort is N=155 (97 LMS, 58 DDLPS) using
+`ICD_O_3_HISTOLOGY`. Both N=158 and N=163 are out for this phase, and
+`CONTEXT.md` and `spec.md` got dated corrections in place rather than
+silent edits. DDLPS is labeled 1 (it's the minority class and PR-AUC is the
+primary metric, which is conventionally computed with the minority class as
+positive), LMS is labeled 0. The output is four parquet files that all
+share one patient index, clinical labels, RNA-seq, CNA, and mutations,
+rather than one giant flat file with tens of thousands of columns. That
+matches how `curatedTCGAData` and `MultiAssayExperiment` structure the same
+kind of data, and keeps things simple when step 11 needs to filter genes
+per modality per fold later. The three patients missing a whole modality
+stay in the cohort as an all-missing row in that one table, with a flag
+column noting which modality they're missing, rather than getting dropped,
+since losing patients from an already-small cohort isn't something to do
+quietly. For the duplicate gene symbols, dropped the ones with no symbol at
+all, and for genuine duplicates, appended the Entrez ID to tell them apart,
+and where even that collided, added a simple counter, so no measured data
+gets silently thrown away. The clinical table also carries sex, age, tumor
+site, and the uterine-site flag, not just the label, since those are needed
+for the clinical-only baseline and uterine-sensitivity analyses already
+planned. And the mutation matrix only includes genes that were actually
+mutated at least once in this specific cohort, since a gene that's never
+mutated here is just an all-zero column that would get filtered out later
+anyway.
+
+After running it: the RNA-seq table came out to 155 patients by 20,518
+genes, CNA to 155 by 25,128, mutations to 155 by 5,165, and the clinical
+table to 155 by 13 columns. Checked afterward that all four tables have the
+patients in the same order, that exactly two rows are fully missing in
+RNA-seq and one in CNA (matching what was expected, no more and no fewer),
+that MDM2 shows up in both the RNA-seq and CNA columns, and that the label
+split really is 97 to 58. None of the 17,393 mutation records got dropped
+as non-relevant mutation types, they were all already the kind of mutation
+that counts.
+
+What's still not done: an actual dedicated pass checking for missing data
+across the finished merged tables. The gaps found above came up as a
+byproduct of building the merge, not from a deliberate check of the four
+output files on their own terms. That's the next thing to do, before moving
+on to per-fold feature selection. Also still open and unrelated to any of
+this: the three GDC manifest files with mismatched checksums from the
+September 22 entry, still unresolved.
