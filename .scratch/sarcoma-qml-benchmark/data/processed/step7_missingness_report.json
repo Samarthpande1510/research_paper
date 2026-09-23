@@ -1,0 +1,98 @@
+{
+  "alignment": {
+    "rna": {
+      "same_patients_same_order_as_clinical": true,
+      "n_patients": 155,
+      "n_features": 20518,
+      "duplicate_column_names": 0
+    },
+    "cna": {
+      "same_patients_same_order_as_clinical": true,
+      "n_patients": 155,
+      "n_features": 25128,
+      "duplicate_column_names": 0
+    },
+    "mut": {
+      "same_patients_same_order_as_clinical": true,
+      "n_patients": 155,
+      "n_features": 5165,
+      "duplicate_column_names": 0
+    }
+  },
+  "rna": {
+    "total_nan_cells": 41036,
+    "patients_fully_missing": [
+      "TCGA-DX-A48V",
+      "TCGA-DX-A6BK"
+    ],
+    "patients_partially_missing": [],
+    "features_with_any_nan": 20518,
+    "patients_missing_per_feature_histogram": {
+      "2": 20518
+    },
+    "missingness_is_uniform_across_features": true,
+    "clinical_flag_matches_data": true,
+    "value_min": 0.0,
+    "value_max": 21.626440295316815,
+    "constant_columns": 376,
+    "constant_columns_pct": 1.83
+  },
+  "cna": {
+    "total_nan_cells": 25128,
+    "patients_fully_missing": [
+      "TCGA-WK-A8XZ"
+    ],
+    "patients_partially_missing": [],
+    "features_with_any_nan": 25128,
+    "patients_missing_per_feature_histogram": {
+      "1": 25128
+    },
+    "missingness_is_uniform_across_features": true,
+    "clinical_flag_matches_data": true,
+    "value_min": -2.0,
+    "value_max": 2.0,
+    "unexpected_values": [],
+    "constant_columns": 0,
+    "constant_columns_pct": 0.0
+  },
+  "mut": {
+    "total_nan_cells": 0,
+    "patients_fully_missing": [],
+    "patients_partially_missing": [],
+    "features_with_any_nan": 0,
+    "patients_missing_per_feature_histogram": {
+      "0": 5165
+    },
+    "missingness_is_uniform_across_features": true,
+    "value_min": 0.0,
+    "value_max": 1.0,
+    "unexpected_values": [],
+    "constant_columns": 0,
+    "constant_columns_pct": 0.0,
+    "patients_with_zero_mutations_count": 20,
+    "patients_with_zero_mutations": [
+      "TCGA-DX-A1KY",
+      "TCGA-DX-A1KZ",
+      "TCGA-DX-A1L1",
+      "TCGA-DX-A1L3",
+      "TCGA-DX-A1L4",
+      "TCGA-DX-A23R",
+      "TCGA-DX-A23T",
+      "TCGA-DX-A23U",
+      "TCGA-DX-A23Z",
+      "TCGA-DX-A3LT",
+      "TCGA-HS-A5N7",
+      "TCGA-HS-A5N8",
+      "TCGA-HS-A5NA",
+      "TCGA-IE-A4EK",
+      "TCGA-IF-A3RQ",
+      "TCGA-K1-A3PO",
+      "TCGA-K1-A42W",
+      "TCGA-K1-A42X",
+      "TCGA-PC-A5DL",
+      "TCGA-PC-A5DO"
+    ],
+    "note": "All zero-mutation patients were checked against cBioPortal's sequenced sample list on 2026-09-23: real zeros, not missing."
+  },
+  "unexplained_missingness": []
+}
