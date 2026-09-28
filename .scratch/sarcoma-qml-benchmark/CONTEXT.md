@@ -139,6 +139,24 @@ without a new reason. Full detail is in the logbook.
    2026-09-21. Two ways to resolve: restore the original bytes, or keep the edit and
    regenerate the checksums. Not yet decided. Cosmetic either way — these files are only
    used for patient-count cross-checks, not modeling.
+3. **DECIDED 2026-09-23 (delegated to Claude, reversible): no MAD filter.** The first
+   sweep (`results/step11_gene_selection_report.md`) found the spec's top-1,000 MAD filter
+   drops MDM2 and CDK4 (MAD rank 6,338 and 4,974 of 20,518). The second sweep
+   (`results/step11b_filter_sweep_report.md`) compared top 1,000 / 3,000 / 6,500 / none:
+   PR-AUC 0.970 to 0.985 everywhere, all inside the noise, but with no filter MDM2 is picked
+   in 100% of folds. Cost is about 6.5 min per 50-fold run instead of seconds. Top 6,500
+   also works but was picked by looking at where MDM2 ranks.
+4. **DECIDED 2026-09-23 (delegated): fix C=0.1, l1_ratio=0.5, run d at both 8 and 16.**
+   The first sweep showed these settings are all inside the noise.
+5. **DECIDED 2026-09-23 (delegated): RNA-seq only for the first benchmark.** Copy number is
+   a possible separate sweep later.
+6. **DECIDED 2026-09-23 (delegated): 5 splits x 10 repeats = 50 folds.** The spec's "5x5
+   (50-fold)" doesn't add up (5x5 is 25).
+7. **DECIDED 2026-09-23 (delegated): benchmark uses the same 152 patients for every
+   model** (57 DDLPS, 95 LMS): the ones with RNA-seq, copy number and mutations.
+8. **OPEN: DagsHub.** User wants experiment tracking on DagsHub instead of keeping the
+   MLflow database in git. Waiting on the user's DagsHub account, repo connection and token.
+   Scripts already log to DagsHub when `MLFLOW_TRACKING_URI` is set.
 
 ## 6. Working habits to keep — do not skip these
 

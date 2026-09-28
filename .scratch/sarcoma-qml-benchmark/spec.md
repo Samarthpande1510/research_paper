@@ -31,6 +31,7 @@ This project is a **standalone phase**: a two-class sarcoma subtype classificati
 - **Methylation (optional layer)**: Illumina 450k beta-values, <0.8% missing; impute with k-NN (k=5) **strictly inside training folds only** — never on the full dataset (leakage).
 - **Dimensionality funnel to 8–16 features** (NISQ qubit ceiling), computed inside each CV fold:
   1. Unsupervised MAD filtering → top 1,000 highest-variance genes.
+     *(CHANGED 2026-09-23, see `results/step11b_filter_sweep_report.md`: the MAD filter ranks MDM2 and CDK4 at 6,338 and 4,974 of 20,518, so the top-1,000 cutoff removes them before selection. Now: no unsupervised filter, ElasticNet sees all genes. Scores were the same within noise, MDM2 is picked in 100% of folds. Original wording above kept.)*
   2. Supervised ElasticNet/Lasso → top *d* ∈ {8, 16} driver genes (hard ceiling: 30).
   3. Min-max scale to [0, π] for quantum angle encoding.
 
@@ -63,7 +64,7 @@ This project is a **standalone phase**: a two-class sarcoma subtype classificati
 - **Null hypothesis, stated before training begins**: H₀ = no significant PR-AUC difference between the best quantum model and the MLP. Commit to reporting a null result with equal weight to a positive one — the QML benchmarking literature has a documented pattern of claimed kernel advantages disappearing under fair classical baselines, so pre-committing to symmetric reporting guards against that bias.
 - **One confirmatory test**: best quantum model vs. MLP on PR-AUC, pre-registered before data collection.
 - **Everything else exploratory**: all other pairwise/metric comparisons get FDR correction, not treated as confirmatory findings.
-- **Correlated-fold correction**: use a correlation-aware / variance-corrected significance test (e.g., a corrected resampled t-test) on the repeated 5×5 (50-fold) cross-validation output — naive paired Wilcoxon/DeLong tests understate variance when folds are correlated, inflating false positives.
+- **Correlated-fold correction**: use a correlation-aware / variance-corrected significance test (e.g., a corrected resampled t-test) on the repeated 5×5 (50-fold) cross-validation output *(2026-09-23: 5×5 is 25, not 50. Interpreted as 5 splits × 10 repeats = 50 folds.)* — naive paired Wilcoxon/DeLong tests understate variance when folds are correlated, inflating false positives.
 - **Generalization check**: promoted from optional to required — after the primary LMS-vs-DDLPS result, re-run the best-performing pipeline on a secondary independent cohort (cBioPortal GBM or LAML) to check the result isn't an artifact of this one 163-patient cohort.
 
 ## 8. Step-by-step data acquisition & preprocessing
@@ -81,7 +82,7 @@ No special credentials needed for anything below — all open-access. Controlled
 8. **(Optional) Harmonize GTEx units.** If step 4's data is used, reconcile gene identifiers (Ensembl vs. HGNC symbol) and expression units between cBioPortal/GDC and Xena TOIL before merging — RSEM and `log2(TPM)` are not the same scale and cannot be combined directly.
 9. **Apply per-modality transforms**: `log2(RSEM+1)` for expression; GISTIC2 thresholded calls for CNA (missing → diploid/0); binary gene-level indicator matrix for somatic mutations.
 10. **Do not carve out a separate held-out set.** *(Deviation from the original protocol.)* Rely on each cross-validation fold's own test partition as the honest per-fold evaluation instead of an additional single held-out split — at n=163 with only 58 minority-class cases, a second untouched split starves the minority class for negligible benefit, given the strict per-fold refitting in step 11.
-11. **Per-fold feature selection, inside training folds only.** MAD filtering to the top 1,000 most variable genes, then ElasticNet/Lasso down to the final feature count (8–16, ceiling 30) — reselect independently per fold, never once on the full dataset.
+11. **Per-fold feature selection, inside training folds only.** MAD filtering to the top 1,000 most variable genes, then ElasticNet/Lasso down to the final feature count (8–16, ceiling 30) — reselect independently per fold, never once on the full dataset. *(CHANGED 2026-09-23: the MAD filtering part is dropped, see the note in §4. ElasticNet fixed at C=0.1, l1_ratio=0.5, run at d=8 and d=16.)*
 12. **Per-fold scaling.** From the fold-specific feature set, branch into two scalers: standard/min-max scaling for the classical models (MLP, and TabNet/XGBoost/RBF-SVM if in scope), and min-max scaling to [0, π] for angle encoding into the quantum models (PQK-SVM, HQNN, and FQK-SVM if in scope). Fit both scalers only on the training fold.
 13. **Fix and log random seeds** for every stochastic component: network initialization, variational circuit parameter initialization, cross-validation fold assignment.
 14. **Log everything before training**: which features were selected per fold, how many values were imputed, which scaler produced which table. This is what makes results traceable later.
